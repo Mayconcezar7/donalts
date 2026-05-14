@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Restaurant {
+  id             String @id @default(uuid())
+  name           String
+  slug           String @unique
+  description    String
+  avatarImageUrl String
+  coverImageUrl  String
+
+  createdAd      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  menuCategories MenuCategory[]
+  products       Product[]
+  orders         Order[]
+}
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  name         String
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  products     Product[]
+  createdAd    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String
+  ingredients String[]
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  menuCategoryId String
+  menuCategory   MenuCategory   @relation(fields: [menuCategoryId], references: [id])
+  orderProducts  OrderProduct[]
+  createdAd      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+
+  total             Decimal           @db.Decimal(10, 2)
+  status            OrderStatus       @default(PENDING)
+  consumptionMethod ConsumptionMethod
+
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  createdAd     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orderProducts OrderProduct[]
+}
+
+model OrderProduct {
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
+
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  createdAd DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PREPARATION
+  FINISHED
+}
+
+enum ConsumptionMethod {
+  TAKEAWAY
+  DINE_IN
+}
